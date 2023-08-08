@@ -6,20 +6,13 @@ from django.forms.models import model_to_dict
 import json
 
 
-def products(request: HttpRequest, pk=None) -> JsonResponse:
+def product_list(request: HttpRequest) -> JsonResponse:
     if request.method == 'GET':
-        if pk is None:
-            products = Product.objects.all()
+        products = Product.objects.all()
 
-            data = [model_to_dict(product, fields=['id', 'name']) for product in products]
+        data = [model_to_dict(product, fields=['id', 'name']) for product in products]
 
-            return JsonResponse(data, safe=False)
-        else:
-            product = Product.objects.get(id=pk)
-
-            data = model_to_dict(product, fields=['id', 'name'])
-
-            return JsonResponse(data)
+        return JsonResponse(data, safe=False)
 
     elif request.method == 'POST':
         data_json = request.body.decode('utf-8')
@@ -32,3 +25,20 @@ def products(request: HttpRequest, pk=None) -> JsonResponse:
         product.save()
         
         return JsonResponse(model_to_dict(product), status=201)
+
+
+def product_detail(request: HttpRequest, pk: int) -> JsonResponse:
+    if request.method == 'GET':
+        product = Product.objects.get(id=pk)
+
+        data = model_to_dict(product, fields=['id', 'name'])
+
+        return JsonResponse(data)
+
+    elif request.method == 'DELETE':
+        product = Product.objects.get(id=pk)
+        
+        product.delete()
+        
+        return JsonResponse({"message": "product is deleted."}, status=205)
+
