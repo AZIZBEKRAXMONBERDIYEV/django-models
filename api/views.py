@@ -1,19 +1,34 @@
 from django.http import JsonResponse, HttpRequest
 
 from .models import Product
-# from django.forms.models import model_to_dict
+from django.forms.models import model_to_dict
 
-def model_to_dict(instance: Product) -> dict:
-    return {
-        'id': instance.id,
-        'name': instance.name,
-        'description': instance.description,
-    }
+import json
 
 
-def products(request: HttpRequest) -> JsonResponse:
-    products = Product.objects.all()
+def products(request: HttpRequest, pk=None) -> JsonResponse:
+    if request.method == 'GET':
+        if pk is None:
+            products = Product.objects.all()
 
-    data = {'products': [model_to_dict(product) for product in products]}
+            data = [model_to_dict(product, fields=['id', 'name']) for product in products]
 
-    return JsonResponse(data)
+            return JsonResponse(data, safe=False)
+        else:
+            product = Product.objects.get(id=pk)
+
+            data = model_to_dict(product, fields=['id', 'name'])
+
+            return JsonResponse(data)
+
+    elif request.method == 'POST':
+        data_json = request.body.decode('utf-8')
+        data = json.loads(data_json)
+
+        product = Product(
+            name=data['name'],
+            description=data['description']
+        )
+        product.save()
+        
+        return JsonResponse(model_to_dict(product), status=201)
